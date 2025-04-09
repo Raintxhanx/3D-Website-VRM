@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { gsap } from 'gsap';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { VRMLoaderPlugin  } from '@pixiv/three-vrm';
 
 // Scene setup
 const scene = new THREE.Scene();
@@ -48,10 +50,10 @@ function createBlock(x, z) {
 
 // Generate Block Utama
 function BlockUtama(){
-  const geometry = new THREE.BoxGeometry(7, 80, 7);
+  const geometry = new THREE.BoxGeometry(7, 60, 7);
   const material = new THREE.MeshStandardMaterial({ color: 0xFF0000 });
   const cube = new THREE.Mesh(geometry, material);
-  cube.position.set(0,0,0)
+  cube.position.set(0,30,0)
   scene.add(cube)
 }
 
@@ -85,12 +87,46 @@ camera.position.set(0, 100, 0);
 controls.target.set(0,0,0);
 const lookTarget = new THREE.Vector3(0, 0, 0);
 
-// Animasi Kamera (pakai gsap)
-gsap.to(camera.position, {
+// Memulai loading semua aset
+loadVRMModel().then((vrm) => {
+  // Semua sudah dimuat, mulai animasi dan tampilkan UI
+  gsap.to(camera.position, {
     duration: 3,
     x: -25.43,
     y: 32.19,
     z: 10.32,
+    ease: "power2.out",
+    onUpdate: () => {
+      controls.target.copy(lookTarget);
+      controls.update();  
+    },
+    onComplete: () => {
+      controls.enabled = true;
+      document.getElementById('content').classList.remove('hidden');
+      document.getElementById('myButton').classList.remove('hidden');
+    }
+  });
+
+  // Target kamera
+  gsap.to(lookTarget, {
+    duration: 3,
+    x: 10.53,
+    y: 32.32,
+    z: 31.39,
+    ease: "power2.out",
+  });
+
+}).catch((error) => {
+  console.error('Gagal load semua objek:', error);
+});
+
+// Scene Kamera 1
+function sceneCamera1(){
+gsap.to(camera.position, {
+    duration: 3,
+    x: 73.61,
+    y: 2.00,
+    z: -94.87,
     ease: "power2.out",
     onUpdate: () => {
       controls.target.copy(lookTarget); // update setiap frame
@@ -98,17 +134,19 @@ gsap.to(camera.position, {
     },
     onComplete: () => {
       controls.enabled = true; // nyalakan kontrol setelah animasi selesai
+      document.getElementById('content').classList.remove('hidden');
     }
   });
 
 // Animasi target arah pandang
 gsap.to(lookTarget, {
-  duration: 3,
-  x: 10.53,
-  y: 32.32,
-  z: 31.39,
-  ease: "power2.out",
+    duration: 3,
+    x: 34.51,
+    y: -2.69,
+    z: -55.05,
+    ease: "power2.out",
 });
+}
 
 // Display posisi kamera
 const infoDiv = document.getElementById('info');
@@ -132,6 +170,35 @@ function updateInfo() {
   }
 }
 
+function loadVRMModel() {
+  return new Promise((resolve, reject) => {
+    const loader = new GLTFLoader();
+    loader.register(parser => new VRMLoaderPlugin(parser));
+
+    loader.load(
+      '/2464006972577449610.vrm',
+      (gltf) => {
+        const vrm = gltf.userData.vrm;
+        scene.add(vrm.scene);
+
+        vrm.scene.position.set(69.94, 0, -91.13);
+        vrm.scene.rotation.y = Math.PI;
+        vrm.scene.scale.set(1.0, 1.0, 1.0);
+
+        console.log('VRM loaded:', vrm);
+        resolve(vrm); // success
+      },
+      (progress) => {
+        console.log(`Loading: ${(progress.loaded / progress.total) * 100}%`);
+      },
+      (error) => {
+        console.error('Error loading VRM:', error);
+        reject(error); // fail
+      }
+    );
+  });
+}
+
 // Animation loop
 function animate() {
     requestAnimationFrame(animate);
@@ -144,7 +211,9 @@ function animate() {
 animate();
 
 document.getElementById("myButton").addEventListener("click", () => {
-  alert("Tombol diklik!");
+  document.getElementById('content').classList.add('hidden');
+  document.getElementById('myButton').classList.add('hidden');
+  sceneCamera1();
 });
 
 // Responsif
