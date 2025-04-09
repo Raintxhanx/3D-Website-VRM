@@ -1,0 +1,58 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  height: 100%;
+  font-family: sans-serif;
+}
+
+/* Three.js canvas di belakang */
+#bg {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  display: block;
+}
+
+/* Elemen info UI di atas canvas */
+#info {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  z-index: 10; /* lebih tinggi dari #bg */
+}
+
+/* Tombol di atas canvas */
+#myButton {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 10; /* sama seperti info */
+  padding: 2rem;
+  background-color: #008cff;
+  color: white;
+  border: none;
+  border-radius: 1rem;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+#content {
+  position: absolute;
+  z-index: 1;
+  color: white;
+  text-align: center;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -30%);
+  background-color: rgba(0, 0, 0, 0.4);
+  padding: 2rem;
+  border-radius: 1rem;
+}

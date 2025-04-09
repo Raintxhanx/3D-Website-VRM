@@ -1,0 +1,155 @@
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { gsap } from 'gsap';
+
+// Scene setup
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xcce0ff);
+
+const camera = new THREE.PerspectiveCamera(
+  75, 
+  window.innerWidth / window.innerHeight,
+  0.1,
+  1000
+);
+
+const renderer = new THREE.WebGLRenderer({
+  canvas: document.getElementById('bg'),
+  antialias: true,
+});
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
+
+// Kontrol
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.enabled = false; // disable dulu agar user tidak ganggu saat animasi
+
+// Lighting
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+
+const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+dirLight.position.set(10, 20, 10);
+scene.add(dirLight);
+
+// Generate blocks with varied height
+function createBlock(x, z) {
+  const width = 3;
+  const depth = 3;
+  const height = Math.random() * 20 + 1;
+
+  const geometry = new THREE.BoxGeometry(width, height, depth);
+  const material = new THREE.MeshStandardMaterial({ color: 0x55aa55 });
+  const cube = new THREE.Mesh(geometry, material);
+
+  cube.position.set(x, height / 2, z);
+  return cube;
+}
+
+// Generate Block Utama
+function BlockUtama(){
+  const geometry = new THREE.BoxGeometry(7, 80, 7);
+  const material = new THREE.MeshStandardMaterial({ color: 0xFF0000 });
+  const cube = new THREE.Mesh(geometry, material);
+  cube.position.set(0,0,0)
+  scene.add(cube)
+}
+
+BlockUtama();
+
+// Plane
+const geometry = new THREE.PlaneGeometry(200, 200); // ukuran bidang
+const material = new THREE.MeshStandardMaterial({ color: 0xaaaaaa });
+const plane = new THREE.Mesh(geometry, material);
+
+plane.rotation.x = -Math.PI / 2;
+
+plane.receiveShadow = true;
+
+// Tambahkan ke scene
+scene.add(plane);
+
+// Add blocks in a grid
+const gridSize = 10;
+for (let i = -gridSize; i <= gridSize; i++) {
+  for (let j = -gridSize; j <= gridSize; j++) {
+    if (Math.random() < 0.3) {
+      const block = createBlock(i * 7, j * 8);
+      scene.add(block);
+    }
+  }
+}
+
+// Kamera awal
+camera.position.set(0, 100, 0);
+controls.target.set(0,0,0);
+const lookTarget = new THREE.Vector3(0, 0, 0);
+
+// Animasi Kamera (pakai gsap)
+gsap.to(camera.position, {
+    duration: 3,
+    x: -25.43,
+    y: 32.19,
+    z: 10.32,
+    ease: "power2.out",
+    onUpdate: () => {
+      controls.target.copy(lookTarget); // update setiap frame
+      controls.update();  
+    },
+    onComplete: () => {
+      controls.enabled = true; // nyalakan kontrol setelah animasi selesai
+    }
+  });
+
+// Animasi target arah pandang
+gsap.to(lookTarget, {
+  duration: 3,
+  x: 10.53,
+  y: 32.32,
+  z: 31.39,
+  ease: "power2.out",
+});
+
+// Display posisi kamera
+const infoDiv = document.getElementById('info');
+let lastCameraPos = new THREE.Vector3();
+let lastTarget = new THREE.Vector3();
+
+// Update posisi kamera dan target
+function updateInfo() {
+  const pos = camera.position;
+  const target = controls.target;
+
+  // Cek apakah posisi berubah
+  if (!pos.equals(lastCameraPos) || !target.equals(lastTarget)) {
+    infoDiv.innerText =
+      `Camera: (${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)})\n` +
+      `Look At: (${target.x.toFixed(2)}, ${target.y.toFixed(2)}, ${target.z.toFixed(2)})`;
+
+    // Simpan posisi terakhir
+    lastCameraPos.copy(pos);
+    lastTarget.copy(target);
+  }
+}
+
+// Animation loop
+function animate() {
+    requestAnimationFrame(animate);
+    controls.update(); // penting untuk OrbitControls
+    renderer.render(scene, camera);
+
+    // Update posisi kamera dan target
+   updateInfo();
+  }
+animate();
+
+document.getElementById("myButton").addEventListener("click", () => {
+  alert("Tombol diklik!");
+});
+
+// Responsif
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
