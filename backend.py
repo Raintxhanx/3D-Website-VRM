@@ -1,6 +1,7 @@
 import mysql.connector
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+import os
 
 # Menyimpan vrm > blob
 def save_vrm_to_db(file_path, file_name):
@@ -69,6 +70,27 @@ def restore_vrm_api():
 
     restore_vrm_from_db(path, name)
     return jsonify({'message': f'{name} restored to {path}'})
+
+@app.route('/api/delete', methods=['POST'])
+def delete_vrm_file():
+    data = request.get_json()
+    name = data.get('name')
+
+    if not name:
+        return jsonify({'error': 'Missing file name'}), 400
+
+    # Path statis (diatur backend)
+    folder_path = os.path.join(os.getcwd(), 'threejs_vrm', 'public')
+    file_path = os.path.join(folder_path, f"{name}.vrm")
+
+    try:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            return jsonify({'message': f'File deleted: {file_path}'})
+        else:
+            return jsonify({'error': 'File not found'}), 404
+    except Exception as e:
+        return jsonify({'error': f'Failed to delete file: {str(e)}'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -136,6 +136,7 @@ gsap.to(camera.position, {
       controls.enabled = true; // nyalakan kontrol setelah animasi selesai
       document.getElementById('content').classList.remove('hidden');
       document.getElementById('ButtonScene1').classList.remove('hidden');
+      document.getElementById('ButtonScene2').classList.remove('hidden');
     }
   });
 
@@ -171,13 +172,47 @@ function updateInfo() {
   }
 }
 
-function loadVRMModel() {
+let currentVRM = null; // Global reference untuk model yang sedang aktif
+
+function removeVRMModel() {
+  if (currentVRM) {
+    scene.remove(currentVRM.scene); // Hapus dari scene
+    currentVRM.scene.traverse((child) => {
+      if (child.isMesh) {
+        child.geometry.dispose();
+        if (child.material.isMaterial) {
+          cleanMaterial(child.material);
+        } else {
+          // Jika material array (beberapa material)
+          for (const material of child.material) {
+            cleanMaterial(material);
+          }
+        }
+      }
+    });
+    console.log('VRM removed');
+    currentVRM = null;
+  }
+}
+
+function cleanMaterial(material) {
+  material.dispose();
+  // Bersihkan tekstur juga
+  for (const key in material) {
+    const value = material[key];
+    if (value && typeof value === 'object' && 'minFilter' in value) {
+      value.dispose();
+    }
+  }
+}
+
+function loadVRMModel(x) {
   return new Promise((resolve, reject) => {
     const loader = new GLTFLoader();
     loader.register(parser => new VRMLoaderPlugin(parser));
 
     loader.load(
-      '/maomao.vrm',
+      x,
       (gltf) => {
         const vrm = gltf.userData.vrm;
         scene.add(vrm.scene);
@@ -186,6 +221,7 @@ function loadVRMModel() {
         vrm.scene.rotation.y = Math.PI;
         vrm.scene.scale.set(1.0, 1.0, 1.0);
 
+        currentVRM = vrm; // Simpan yang aktif
         console.log('VRM loaded:', vrm);
         resolve(vrm); // success
       },
@@ -200,6 +236,16 @@ function loadVRMModel() {
   });
 }
 
+async function deleteVRMFile(name) {
+  const response = await fetch('http://127.0.0.1:5000/api/delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: name }) // hanya nama file
+  });
+
+  const data = await response.json();
+}
+
 // Animation loop
 function animate() {
     requestAnimationFrame(animate);
@@ -212,11 +258,14 @@ function animate() {
 animate();
 
 // Menghubungi API
-async function getHelloFromFlask() {
+async function getHelloFromFlask(x) {
   const response = await fetch('http://127.0.0.1:5000/api/restore', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ path:"D:/(II)All_NodeJS_Folder/ThreeJS_3d/threejs_vrm/public/maomao.vrm", name:"Maomao" })
+    body: JSON.stringify({
+      path: `D:/(II)All_NodeJS_Folder/ThreeJS_3d/threejs_vrm/public/${x}.vrm`,
+      name: x
+    })
   });
 
   const data = await response.json();
@@ -229,8 +278,17 @@ document.getElementById("myButton").addEventListener("click", () => {
 });
 
 document.getElementById("ButtonScene1").addEventListener("click", async () => {
-  await getHelloFromFlask();
-  loadVRMModel();
+  removeVRMModel();
+  deleteVRMFile("Sparkle")
+  await getHelloFromFlask("Maomao");
+  loadVRMModel("/Maomao.vrm");
+});
+
+document.getElementById("ButtonScene2").addEventListener("click", async () => {
+  removeVRMModel();
+  deleteVRMFile("Maomao")
+  await getHelloFromFlask("Sparkle");
+  loadVRMModel("/Sparkle.vrm");
 });
 
 // Responsif
