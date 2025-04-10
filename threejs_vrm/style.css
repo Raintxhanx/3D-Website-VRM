@@ -86,3 +86,13 @@ html, body {
   transition-delay: 0s;
 }
 
+#myButton:not(.hidden) {
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+#ButtonScene1:not(.hidden) {
+  visibility: visible;
+  transition-delay: 0s;
+}
+

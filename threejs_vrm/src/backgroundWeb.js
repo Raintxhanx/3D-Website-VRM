@@ -88,8 +88,8 @@ controls.target.set(0,0,0);
 const lookTarget = new THREE.Vector3(0, 0, 0);
 
 // Memulai loading semua aset
-loadVRMModel().then((vrm) => {
-  // Semua sudah dimuat, mulai animasi dan tampilkan UI
+//loadVRMModel().then((vrm) => {
+// Semua sudah dimuat, mulai animasi dan tampilkan UI
   gsap.to(camera.position, {
     duration: 3,
     x: -25.43,
@@ -114,11 +114,11 @@ loadVRMModel().then((vrm) => {
     y: 32.32,
     z: 31.39,
     ease: "power2.out",
-  });
-
-}).catch((error) => {
-  console.error('Gagal load semua objek:', error);
 });
+
+//}).catch((error) => {
+//  console.error('Gagal load semua objek:', error);
+//});
 
 // Scene Kamera 1
 function sceneCamera1(){
@@ -135,6 +135,7 @@ gsap.to(camera.position, {
     onComplete: () => {
       controls.enabled = true; // nyalakan kontrol setelah animasi selesai
       document.getElementById('content').classList.remove('hidden');
+      document.getElementById('ButtonScene1').classList.remove('hidden');
     }
   });
 
@@ -176,7 +177,7 @@ function loadVRMModel() {
     loader.register(parser => new VRMLoaderPlugin(parser));
 
     loader.load(
-      '/2464006972577449610.vrm',
+      '/maomao.vrm',
       (gltf) => {
         const vrm = gltf.userData.vrm;
         scene.add(vrm.scene);
@@ -210,10 +211,26 @@ function animate() {
   }
 animate();
 
+// Menghubungi API
+async function getHelloFromFlask() {
+  const response = await fetch('http://127.0.0.1:5000/api/restore', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path:"D:/(II)All_NodeJS_Folder/ThreeJS_3d/threejs_vrm/public/maomao.vrm", name:"Maomao" })
+  });
+
+  const data = await response.json();
+}
+
 document.getElementById("myButton").addEventListener("click", () => {
   document.getElementById('content').classList.add('hidden');
   document.getElementById('myButton').classList.add('hidden');
   sceneCamera1();
+});
+
+document.getElementById("ButtonScene1").addEventListener("click", async () => {
+  await getHelloFromFlask();
+  loadVRMModel();
 });
 
 // Responsif
